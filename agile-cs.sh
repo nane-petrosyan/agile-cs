@@ -2,6 +2,7 @@
 
 DIRECTORY="$HOME/.gitlinker"
 FILE_PATH=""
+HASH=550d98bd0d4aff9cd04c5f973ba0f7bc8bfe7619ac58cc6083cf89d2878a0c06
 
 load_persister() {
     local REPO=$(get_git_repo)
@@ -17,7 +18,7 @@ link_branch() {
     local URL=$2
 
     if grep -q "^$BRANCH_NAME=" "$FILE_PATH"; then
-        sed -i.bak "s|^$BRANCH_NAME=.*|$BRANCH_NAME=$URL|" "$FILE_PATH"
+        sed -i.bak "s|^$BRANCH_NAME=.*|$BRANCH_NAME="$URL"|" "$FILE_PATH"
     else
         echo "$BRANCH_NAME=$TICKET" >> "$FILE_PATH"
     fi
@@ -27,7 +28,7 @@ link_branch() {
 
 get_url() {
     local BRANCH=$1
-    local URL=$(grep "^$BRANCH=" "$FILE_PATH" | cut -d '=' -f 2)
+    local URL=$(grep "^$BRANCH=" "$FILE_PATH" | sed "s/^$BRANCH=//")
 
     echo "$URL"
 }
@@ -54,7 +55,7 @@ handle_add_link() {
     local ticket=""
 
     while getopts ":b:t:" opt; do
-        case $opt in
+        case "$opt" in
             b)
                 branch="$OPTARG"
                 ;;
@@ -95,7 +96,7 @@ handle_open_link() {
     load_persister
     local ticket=$(get_url "$branch") 
 
-    if [ -z $ticket ]; then
+    if [ -z "$ticket" ]; then
         echo "Ticket not found."
         exit 1
     fi
