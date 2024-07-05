@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -A kv_store
+declare -a kv_store
 DIRECTORY="~/.gitlinker"
 FILE_PATH="$DIRECTORY/branch_ticket_map"
 
@@ -29,13 +29,90 @@ link_branch() {
 
 get_url() {
     local BRANCH=$1
-    echo "The branch matches to ${kv_store[$KEY]}"
+    echo "${kv_store[$KEY]}"
+}
+
+get_git_branch() {
+    local branch_name
+    branch_name=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo "Error: Not inside a Git repository or failed to retrieve branch name."
+        exit 1
+    fi
+    echo "$branch_name"
+}
+
+handle_add_link() {
+    local branch=$(get_git_branch)
+    local ticket=""
+
+    while getopts ":b:t:" opt; do
+        case $opt in
+            b)
+                branch="$OPTARG"
+                ;;
+            t)
+                ticket="$OPTARG"
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ -z "$ticket" ]; then
+        echo "Error: Please specify the url of your ticket using -t option."
+        exit 1
+    fi
+
+    create_persister
+    link_branch "$branch" "$ticket"
+}
+
+handle_open_link() {
+    local branch=$(get_git_branch)
+
+    while getopts ":b:" opt; do
+        case $opt in
+            b)
+                branch="$OPTARG"
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG"
+                exit 1
+                ;;
+        esac
+    done
+
+    create_persister
+    local ticket=$(get_url "$branch")
+    echo "The value for '$branch' is '$ticket'."
 }
 
 main() {
-    local BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-    echo "Opening the ticket for branch '$BRANCH_NAME'"
-    get_url 
+    local command="$1"
+    shift
+
+    if [ -z "$command" ]; then
+        echo "Please specify the command [attachTicket|openTicket]."
+        exit 1
+    fi
+
+    case "$command" in
+        attachTicket)
+            handle_add_link "$@"
+            ;;
+        openTicket)
+            handle_open_link "$@"
+            ;;
+        *)
+            echo "Unknown command. [attachTicket|openTicket]."
+            exit 1
+            ;;
+    esac
 }
 
-main
+main "$@"
+
+
