@@ -1,9 +1,11 @@
 #!/bin/bash
 
-DIRECTORY=".gitlinker"
-FILE_PATH="$DIRECTORY/branch_ticket_map"
+DIRECTORY="$HOME/.gitlinker"
+FILE_PATH=""
 
 load_persister() {
+    local REPO=$(get_git_repo)
+    FILE_PATH="$DIRECTORY/branch_ticket_map_$REPO"
     if [ ! -d "$DIRECTORY" ]; then
         mkdir -p "$DIRECTORY"
         touch "$FILE_PATH"
@@ -32,6 +34,13 @@ get_git_branch() {
         exit 1
     fi
     echo "$branch_name"
+}
+
+get_git_repo() {
+    remote_url=$(git config --get remote.origin.url)
+    repo_name=$(basename -s .git "$remote_url")
+
+    echo "$repo_name"
 }
 
 handle_add_link() {
