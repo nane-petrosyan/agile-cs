@@ -2,7 +2,6 @@
 
 DIRECTORY="$HOME/.gitlinker"
 FILE_PATH=""
-HASH=550d98bd0d4aff9cd04c5f973ba0f7bc8bfe7619ac58cc6083cf89d2878a0c06
 
 load_persister() {
     local REPO=$(get_git_repo)
