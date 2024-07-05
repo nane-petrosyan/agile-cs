@@ -1,35 +1,27 @@
 #!/bin/bash
 
-declare -a kv_store
-DIRECTORY="~/.gitlinker"
+DIRECTORY=".gitlinker"
 FILE_PATH="$DIRECTORY/branch_ticket_map"
 
-create_persister() {
+load_persister() {
     if [ ! -d "$DIRECTORY" ]; then
         mkdir -p "$DIRECTORY"
         touch "$FILE_PATH"
     fi
 }
 
-load_kv_store() {
-    if [ -f "$FILE_PATH" ]; then
-        while IFS='=' read -r KEY VALUE; do
-            kv_store["$KEY"]="$VALUE"
-        done < "$FILE_PATH"
-    fi
-}
-
 link_branch() {
     local BRANCH_NAME=$1
     local URL=$2
-    echo "$BRANCH_NAME=$URL"
-    kv_store["$BRANCH_NAME"="$URL"]
+    echo "$BRANCH_NAME=$URL" >> "$FILE_PATH"
     echo "Linked the branch '$BRANCH_NAME' with '$URL'"
 }
 
 get_url() {
     local BRANCH=$1
-    echo "${kv_store[$KEY]}"
+    local URL=$(grep "^$BRANCH=" "$FILE_PATH" | cut -d '=' -f 2)
+
+    echo "$URL"
 }
 
 get_git_branch() {
@@ -66,7 +58,7 @@ handle_add_link() {
         exit 1
     fi
 
-    create_persister
+    load_persister
     link_branch "$branch" "$ticket"
 }
 
@@ -85,8 +77,14 @@ handle_open_link() {
         esac
     done
 
-    create_persister
-    local ticket=$(get_url "$branch")
+    load_persister
+    local ticket=$(get_url "$branch") 
+
+    if [ -z $ticket ]; then
+        echo "Ticket not found."
+        exit 1
+    fi
+
     echo "The value for '$branch' is '$ticket'."
 }
 
