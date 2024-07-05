@@ -15,8 +15,14 @@ load_persister() {
 link_branch() {
     local BRANCH_NAME=$1
     local URL=$2
-    echo "$BRANCH_NAME=$URL" >> "$FILE_PATH"
-    echo "Linked the branch '$BRANCH_NAME' with '$URL'"
+
+    if grep -q "^$BRANCH_NAME=" "$FILE_PATH"; then
+        sed -i.bak "s|^$BRANCH_NAME=.*|$BRANCH_NAME=$URL|" "$FILE_PATH"
+    else
+        echo "$BRANCH_NAME=$TICKET" >> "$FILE_PATH"
+    fi
+
+    echo "Linked the branch '$BRANCH_NAME' to '$URL'"
 }
 
 get_url() {
