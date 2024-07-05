@@ -94,7 +94,23 @@ handle_open_link() {
         exit 1
     fi
 
-    echo "The value for '$branch' is '$ticket'."
+    open_url $ticket
+}
+
+open_url() {
+    local url="$1"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        open "$url"
+    elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
+        xdg-open "$url"
+    elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]]; then
+        cmd.exe /c start "" "$url"
+    elif [[ "$(expr substr $(uname -s) 1 9)" == "MINGW64_NT" ]]; then
+        cmd.exe /c start "" "$url"
+    else
+        echo "Unsupported platform"
+        exit 1
+    fi
 }
 
 main() {
